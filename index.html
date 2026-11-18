@@ -465,7 +465,7 @@
 
     function renderActivity(data) {
       const items = data.activity || [];
-      if (!items.length) { $("activity").innerHTML = `<div class="empty">No bets or settlements yet. The desks run their first daily checks Thu: Crypto 10:15 AM, Sports 11:15 AM, Politics 12:15 PM ET.</div>`; return; }
+      if (!items.length) { $("activity").innerHTML = `<div class="empty">No bets or settlements yet. Desks check markets daily: Crypto 10:15 AM, Sports 11:15 AM, Politics 12:15 PM ET.</div>`; return; }
       $("activity").innerHTML = items.map((ev) => {
         const settled = ev.kind === "settled";
         const t = settled ? (ev.tone === "up" ? "up" : "down") : "";
