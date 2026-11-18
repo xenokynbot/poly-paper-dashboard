@@ -217,12 +217,12 @@
   </style>
 </head>
 <body>
-  <div class="banner">Paper trading — fake money · read-only · no real bets</div>
+  <div class="banner">Paper trading — fake money · 3 research desks · read-only · no real bets</div>
   <div class="wrap">
     <header class="top">
       <div>
         <h1>Polymarket paper desk</h1>
-        <p class="sub">Six independent fake-money books ($100 each). Nothing here is a real bet, and this page cannot place or change any trade.</p>
+        <p class="sub">Three research desks — Crypto, Sports and Politics — each with a fake $100. Nothing here is a real bet, and this page cannot place or change any trade.</p>
       </div>
       <div class="updated">
         <span class="dot" id="live-dot"></span>
@@ -265,9 +265,9 @@
       <div id="activity" class="activity"></div>
     </section>
     <footer class="note">
-      PAPER TRADING — FAKE MONEY. Read-only live view of simulated Polymarket bets; no wallet is connected and nothing on this page can open, close, or change a trade.
+      PAPER TRADING — FAKE MONEY. Read-only live view of the three research desks' simulated Polymarket bets; no wallet is connected and nothing on this page can open, close, or change a trade.
       The page refreshes about every 30 seconds without reloading; public snapshots are about one to two minutes behind the books.
-      Fast-bot fills are priced against Polymarket's real order books including fees; open marks use Polymarket's public outcome prices.
+      Each desk checks markets once a day (Crypto 10:15 AM, Sports 11:15 AM, Politics 12:15 PM ET), max 10% per bet, max 40% at risk, max 5 open bets. Open marks use Polymarket's public outcome prices.
       Weekly goal: +5% per week, compounding on each book's balance at the start of the week (week 1: $100 → $105 by Fri Nov 20, 11:59 PM ET). All times ET.
     </footer>
   </div>
@@ -333,13 +333,18 @@
       </div>`;
     }
 
+    function nextCheck(data) {
+      const labels = (data.books || []).map((b) => b.next_run_label || "").filter(Boolean);
+      if (!labels.length) return "—";
+      const m = labels[0].match(/Next check (.*?) \(/);
+      return (m ? m[1] : labels[0]) + " · " + (data.books[0].name || "");
+    }
+
     function renderSummary(data) {
       const c = data.combined, wk = data.week || {};
-      const h = data.health || {};
-      const fast = data.fast_combined || {};
       $("summary").innerHTML = `
         <article class="card">
-          <div class="kicker"><span class="book-tag">Combined · all 6 books</span><span class="ver">week ${esc(wk.n)}</span></div>
+          <div class="kicker"><span class="book-tag">Combined · 3 desks</span><span class="ver">week ${esc(wk.n)}</span></div>
           <div class="equity">${usd(c.equity)}</div>
           <div class="pnl ${tone(c.pnl)}">${sgn(c.pnl)} (${pct(c.pnl_pct)}) vs ${usd(c.start)} fake start</div>
           ${goalBar(c, "Week goal")}
@@ -349,11 +354,11 @@
           <div><span class="lbl">Record</span><span class="val">${c.wins}W – ${c.losses}L</span></div>
           <div><span class="lbl">Win rate</span><span class="val">${wr(c)}</span></div></div></article>
         <article class="card"><div class="meta" style="border:0;padding:0;grid-template-columns:1fr">
-          <div><span class="lbl">Open bets</span><span class="val">${c.open}</span></div>
-          <div><span class="lbl">Fast bot (3 accts)</span><span class="val ${tone((fast.equity||0)-(fast.start||0))}">${usd(fast.equity)}</span></div></div></article>
+          <div><span class="lbl">Open bets</span><span class="val">${c.open} / ${(data.books||[]).length * 5}</span></div>
+          <div><span class="lbl">Closed</span><span class="val">${c.closed}</span></div></div></article>
         <article class="card"><div class="meta" style="border:0;padding:0;grid-template-columns:1fr">
-          <div><span class="lbl">Fast bot status</span><span class="val ${h.fast_bot_ok ? "up" : "down"}">${h.fast_bot_ok ? "Running" : "Not responding"}</span></div>
-          <div><span class="lbl">Heartbeat</span><span class="val">${h.fast_bot_heartbeat_age_s == null ? "—" : Math.round(h.fast_bot_heartbeat_age_s) + "s ago"}</span></div></div></article>`;
+          <div><span class="lbl">Next desk check</span><span class="val">${esc(nextCheck(data))}</span></div>
+          <div><span class="lbl">Fake start</span><span class="val">${usd(c.start)}</span></div></div></article>`;
     }
 
     function card(b) {
@@ -369,12 +374,18 @@
             <div><span class="lbl">Open</span><span class="val">${b.open}</span></div>
           </div>
           ${goalBar(b)}
-          ${vers ? `<div class="vers">${vers}</div>` : ""}` : `
+          ${vers ? `<div class="vers">${vers}</div>` : ""}
+          <div class="vers">${esc(b.rules || "")}${b.next_run_label ? " · " + esc(b.next_run_label) : ""}</div>` : `
           <div class="equity">${usd(b.equity)}</div>
-          <div class="pnl flat">No bets yet</div>
+          <div class="pnl flat">No bets yet · all fake cash ready</div>
           <div class="blurb">${esc(b.blurb)}</div>
-          <div class="waiting">${esc(b.status || "No bets yet")}</div>
-          ${goalBar(b)}`;
+          <div class="meta">
+            <div><span class="lbl">Cash</span><span class="val">${usd(b.cash)}</span></div>
+            <div><span class="lbl">Open</span><span class="val">0 / ${esc(b.max_open || 5)}</span></div>
+            <div style="grid-column:1/-1"><span class="lbl">Next research run</span><span class="val">${esc((b.next_run_label || "").replace("Next check ", ""))}</span></div>
+          </div>
+          ${goalBar(b)}
+          <div class="vers">${esc(b.rules || "")}</div>`;
       return `<article class="card">
           <div class="kicker"><span class="book-tag">${colorDot(b.color)}${esc(b.name)}</span><span class="ver" title="${esc(b.tag_desc)}">${esc(b.tag_desc || b.tag)}</span></div>
           ${body}
@@ -420,12 +431,12 @@
           <td class="num ${tone(p.unrealized)}">${sgn(p.unrealized)}</td>
           <td>${esc(p.opened_label)}</td>
           <td>${esc(p.ends_label)}</td>
-        </tr>`).join("") : `<tr><td colspan="9" class="empty">No open paper bets right now.</td></tr>`;
+        </tr>`).join("") : `<tr><td colspan="9" class="empty">No open paper bets yet.</td></tr>`;
     }
 
     function chartSvg(b) {
       const pts = (b.chart || []).filter((p) => typeof p.value === "number");
-      if (pts.length < 3) return `<div class="empty">${b.started ? "Not enough history for a chart yet." : "No bets yet — chart starts with the first bet."}</div>`;
+      if (pts.length < 3) return `<div class="empty">${b.started ? "Not enough history for a chart yet." : "Chart starts after the first bet settles."}</div>`;
       const w = 320, h = 120, padL = 8, padR = 8, padT = 10, padB = 16;
       const vals = pts.map((p) => p.value).concat([b.start, b.week_target]);
       let floor = Math.min(...vals), ceiling = Math.max(...vals);
@@ -454,7 +465,7 @@
 
     function renderActivity(data) {
       const items = data.activity || [];
-      if (!items.length) { $("activity").innerHTML = `<div class="empty">No bets or settlements yet.</div>`; return; }
+      if (!items.length) { $("activity").innerHTML = `<div class="empty">No bets or settlements yet. The desks run their first daily checks Thu: Crypto 10:15 AM, Sports 11:15 AM, Politics 12:15 PM ET.</div>`; return; }
       $("activity").innerHTML = items.map((ev) => {
         const settled = ev.kind === "settled";
         const t = settled ? (ev.tone === "up" ? "up" : "down") : "";
@@ -478,7 +489,6 @@
       $("live-dot").className = ageS < STALE_AFTER_S ? "dot live" : "dot stale";
       const msgs = [];
       if (ageS >= STALE_AFTER_S) msgs.push("Snapshot is " + Math.round(ageS / 60) + " minutes old — the publisher may be paused.");
-      if (data.health && data.health.fast_bot_error) msgs.push("Fast bot data: " + data.health.fast_bot_error);
       const err = $("error");
       err.hidden = !msgs.length; err.textContent = msgs.join(" ");
       renderSummary(data); renderBooks(data); renderComparison(data); renderPositions(data); renderCharts(data); renderActivity(data);
