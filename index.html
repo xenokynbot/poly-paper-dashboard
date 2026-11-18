@@ -342,7 +342,8 @@
           <div class="kicker"><span class="book-tag">Combined · all 6 books</span><span class="ver">week ${esc(wk.n)}</span></div>
           <div class="equity">${usd(c.equity)}</div>
           <div class="pnl ${tone(c.pnl)}">${sgn(c.pnl)} (${pct(c.pnl_pct)}) vs ${usd(c.start)} fake start</div>
-          ${goalBar(c, "Week ends " + (wk.ends_label || ""))}
+          ${goalBar(c, "Week goal")}
+          <div class="muted" style="margin-top:4px">Week ${esc(wk.n)} ends ${esc(wk.ends_label || "")}</div>
         </article>
         <article class="card"><div class="meta" style="border:0;padding:0;grid-template-columns:1fr">
           <div><span class="lbl">Record</span><span class="val">${c.wins}W – ${c.losses}L</span></div>
